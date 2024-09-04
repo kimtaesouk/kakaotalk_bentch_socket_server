@@ -33,42 +33,37 @@ public class ClientHandler implements Runnable {
   public void run() {
     while (true) {
       try {
-        String message;
-        if ((message = this.in.readLine()) != null) {
-          System.out.println(message);
-          String[] parts = message.split("/");
-          if (parts.length < 3) {
-            continue;
-          }
-
-          String msg = parts[3];
-          String senderId = parts[0];
-          String roomId = parts[1];
-          String roomname = parts[2];
-          this.clientId = senderId;
-          if (msg.endsWith("socket_open")) {
-            this.parseAndAddClientToRooms(message);
-            continue;
-          }
-
-          if (msg.equals("입장")) {
-            this.enterClientToRoom(roomId, senderId, roomname);
-            continue;
-          }
-
-          if (msg.equals("퇴장")) {
-            this.removeClientFromRoom(roomId, senderId, roomname);
-            continue;
-          }
-
-          if (this.socket.isConnected()) {
+        if (this.socket.isConnected()) {
             System.out.println("연결됨");
+            String message;
+            if ((message = this.in.readLine()) != null) {
+              System.out.println(message);
+              String[] parts = message.split("/");
+              if (parts.length < 3) {
+                continue;
+              }
+
+              String msg = parts[3];
+              String senderId = parts[0];
+              String roomId = parts[1];
+              String roomname = parts[2];
+
+              this.clientId = senderId;
+
+              if (msg.endsWith("socket_open")) {
+                this.parseAndAddClientToRooms(message);
+                continue;
+              }else if (msg.equals("입장")) {
+                this.enterClientToRoom(roomId, senderId, roomname);
+                continue;
+              }else if (msg.equals("퇴장")) {
+                this.removeClientFromRoom(roomId, senderId, roomname);
+                continue;
+              }
+              int roompeople = this.enterdClientMap.get(roomId).size();
+              this.broadcastToRoom(roomId, senderId, senderId + ": " + roomId + ": " + roomname + ": " + msg + ": " + roompeople);
             continue;
           }
-
-          int roompeople = this.enterdClientMap.get(roomId).size();
-          this.broadcastToRoom(roomId, senderId, senderId + ": " + roomId + ": " + roomname + ": " + msg + ": " + roompeople);
-          continue;
         }
       } catch (IOException var8) {
         var8.printStackTrace();
@@ -120,10 +115,12 @@ public class ClientHandler implements Runnable {
   }
 
   private void broadcastToRoom(String roomId, String senderId, String message) {
+
     if (this.roomClientMap.containsKey(roomId)) {
       for (ClientHandler client : this.roomClientMap.get(roomId)) {
         if (!client.clientId.equals(senderId)) {
           client.sendMessage(message);
+          System.out.println("00 : " + message);
         }
       }
     }

@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Main {
-  private static final int PORT = 8080;
+  private static final int PORT = 4040;
   private static final Map<String, ArrayList<ClientHandler>> roomClientMap = new HashMap<>();
   private static final Map<String, ArrayList<String>> enterdClientMap = new HashMap<>();
 
