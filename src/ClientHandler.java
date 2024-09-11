@@ -72,7 +72,7 @@ public class ClientHandler implements Runnable {
               // 메시지 전송 및 읽음 처리
               clientsInRoom = this.enteredClientMap.get(roomId);
               String clientList = String.join(",", clientsInRoom);  // 방에 있는 클라이언트 목록
-              broadcastToRoom(roomId, senderId, senderId + ": " + roomId + ": " + roomname + ": " + msg + ": " + clientList);
+              enterbroadcastToRoom(roomId, senderId, senderId + ": " + roomId + ": " + roomname + ": " + msg + ": " + clientList);
               break;
           }
         }
@@ -115,7 +115,7 @@ public class ClientHandler implements Runnable {
     String clientList = String.join(",", clientsInRoom);  // 클라이언트 리스트
 
     // 입장 메시지 전송
-    enterbroadcastToRoom(roomId, senderId, senderId + ": " + roomId + ": " + roomname + ": 입장: " + clientList);
+    broadcastToRoom(roomId, senderId, senderId + ": " + roomId + ": " + roomname + ": 입장: " + clientList);
   }
 
   private synchronized void removeClientFromRoom(String roomId, String senderId, String roomname) {
@@ -141,15 +141,14 @@ public class ClientHandler implements Runnable {
       ArrayList<String> clientsInRoom = this.roomClientMap.get(roomId);
       for (String clientIdInRoom : clientsInRoom) {
         // senderId를 제외한 다른 클라이언트에게 메시지 전송
-        if (!clientIdInRoom.equals(senderId)) {
-          ClientHandler clientHandler = this.clientHandlerMap.get(clientIdInRoom);
-          if (clientHandler != null) {
-            clientHandler.sendMessage(message);
-          }
+        ClientHandler clientHandler = this.clientHandlerMap.get(clientIdInRoom);
+        if (clientHandler != null) {
+          clientHandler.sendMessage(message);
         }
       }
     }
   }
+
 
   private synchronized void enterbroadcastToRoom(String roomId, String senderId, String message) {
     // 읽음 처리와 같은 특정 메시지를 방에 있는 클라이언트에게 전송
