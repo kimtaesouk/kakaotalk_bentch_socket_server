@@ -4,6 +4,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class ClientHandler implements Runnable {
@@ -44,9 +45,9 @@ public class ClientHandler implements Runnable {
           if (parts.length < 3) continue;
 
           String senderId = parts[0];  // 클라이언트 ID
-          String roomId = parts[1];  // 방 ID
+          String roomId = parts[1];    // 방 ID
           String roomname = parts[2];  // 방 이름
-          String msg = parts[3];  // 메시지
+          String msg = parts[3];       // 메시지
 
           this.clientId = senderId;
 
@@ -55,19 +56,34 @@ public class ClientHandler implements Runnable {
               // 클라이언트가 연결될 때 처리
               handleSocketOpen(senderId);
               break;
+
             case "made_room":
               // 방이 새로 생성될 때 처리
               handleMadeRoom(senderId, roomId);
               break;
-            case "입장":
+
+            case "입장" :
               // 방 입장 처리
               handleMadeRoom(senderId, roomId);
               enterClientToRoom(roomId, senderId, roomname);
               break;
+
             case "퇴장":
               // 방 퇴장 처리
               removeClientFromRoom(roomId, senderId, roomname);
               break;
+
+            case "차단":
+              // 방에서 클라이언트 차단 처리
+              removeClientToRoom(roomId, senderId);
+              enterClientToRoom(roomId, senderId, roomname);
+              break;
+
+            case "차단해제":
+              // 방에서 차단 해제 처리
+              handleMadeRoom(senderId,roomId);
+              break;
+
             default:
               // 메시지 전송 및 읽음 처리
               clientsInRoom = this.enteredClientMap.get(roomId);
@@ -79,7 +95,8 @@ public class ClientHandler implements Runnable {
       }
     } catch (IOException e) {
       e.printStackTrace();
-    } finally {
+
+  } finally {
       try {
         if (!socket.isClosed()) {
           socket.close();
@@ -175,6 +192,27 @@ public class ClientHandler implements Runnable {
       if (!this.roomClientMap.get(roomId).contains(clientId)) {
         this.roomClientMap.get(roomId).add(clientId);
         System.out.println("Client " + clientId + " added to room " + roomId);
+      }
+    }
+  }
+
+  private void removeClientToRoom(String roomId, String clientId) {
+    synchronized (this.roomClientMap) {
+      // roomId에 해당하는 클라이언트 목록을 가져옴
+      List<String> clients = this.roomClientMap.get(roomId);
+
+      if (clients != null) {
+        // 클라이언트가 roomId에 존재하면 삭제
+        clients.remove(clientId);
+
+        // 클라이언트 목록이 비어 있으면 roomId 자체를 제거
+        if (clients.isEmpty()) {
+          this.roomClientMap.remove(roomId);
+        }
+
+        System.out.println("Client " + clientId + " removed from room " + roomId);
+      } else {
+        System.out.println("No clients found for room " + roomId);
       }
     }
   }
