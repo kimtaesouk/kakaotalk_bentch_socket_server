@@ -41,7 +41,7 @@ public class ClientHandler implements Runnable {
       while (!socket.isClosed() && socket.isConnected()) {
         String message;
         if ((message = this.in.readLine()) != null) {
-          String[] parts = message.split("/");
+          String[] parts = message.split("\\|" );
           if (parts.length < 3) continue;
 
           String senderId = parts[0];  // 클라이언트 ID
@@ -86,6 +86,7 @@ public class ClientHandler implements Runnable {
 
             default:
               // 메시지 전송 및 읽음 처리
+              System.out.println(msg);
               clientsInRoom = this.enteredClientMap.get(roomId);
               String clientList = String.join(",", clientsInRoom);  // 방에 있는 클라이언트 목록
               enterbroadcastToRoom(roomId, senderId, senderId + ": " + roomId + ": " + roomname + ": " + msg + ": " + clientList);
@@ -137,15 +138,16 @@ public class ClientHandler implements Runnable {
 
   private synchronized void removeClientFromRoom(String roomId, String senderId, String roomname) {
     if (roomId != null && this.enteredClientMap.containsKey(roomId)) {
+
+
       this.enteredClientMap.get(roomId).remove(senderId);
       System.out.println("Client " + senderId + " exited from room " + roomId);
 
       clientsInRoom = this.enteredClientMap.get(roomId);
+
       String clientList = String.join(",", clientsInRoom);
-
       // 퇴장 메시지 전송
-      enterbroadcastToRoom(roomId, senderId, senderId + ": " + roomId + ": " + roomname + ": 퇴장: " + clientList);
-
+      enterAllbroadcastToRoom(roomId, senderId, senderId + ": " + roomId + ": " + roomname + ": 퇴장: " + clientList);
       if (this.enteredClientMap.get(roomId).isEmpty()) {
         this.enteredClientMap.remove(roomId);
       }
@@ -179,6 +181,22 @@ public class ClientHandler implements Runnable {
             clientHandler.sendMessage(message);
           }
         }
+      }
+    }
+  }
+
+  private synchronized void enterAllbroadcastToRoom(String roomId, String senderId, String message) {
+    // 읽음 처리와 같은 특정 메시지를 방에 있는 클라이언트에게 전송
+    if (this.roomClientMap.containsKey(roomId)) {
+      ArrayList<String> clientsInRoom = this.roomClientMap.get(roomId);
+      for (String clientIdInRoom : clientsInRoom) {
+        // senderId를 제외한 클라이언트들에게 메시지 전송
+
+        ClientHandler clientHandler = this.clientHandlerMap.get(clientIdInRoom);
+        if (clientHandler != null) {
+          clientHandler.sendMessage(message);
+        }
+
       }
     }
   }
